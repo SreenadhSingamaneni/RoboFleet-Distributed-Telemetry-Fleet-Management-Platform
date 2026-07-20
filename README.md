@@ -2,8 +2,7 @@
 
 A production-oriented, event-driven platform that simulates **1,000 autonomous hospital robots**, ingests their telemetry through Kafka, stores durable history in PostgreSQL, maintains live state in Redis, evaluates operational alerts, and streams updates to a React command center over WebSockets.
 
-This repository is designed as a portfolio system for backend, platform, and distributed-systems interviews. It favors explicit failure semantics, measurable behavior, clean architecture, and deployability over toy-code shortcuts.
-
+This repository demonstrates production-oriented backend and distributed-systems design with explicit failure semantics, measurable behavior, clean architecture, and deployability.
 ## What the system demonstrates
 
 - Java 21 and Spring Boot 3 backend with clean architecture boundaries
@@ -152,7 +151,7 @@ robotic-fleet-telemetry-platform/
 ├── dashboard/                   React + TypeScript operations UI
 ├── observability/               Prometheus rules and Grafana provisioning
 ├── infra/aws/terraform/         AWS reference deployment
-├── docs/                        Design, learning, operations, and interview guides
+├── docs/                        Design, implementation, and operations guides
 ├── .github/workflows/           CI, security, and deployment pipelines
 └── docker-compose.yml           Complete local runtime
 ```
@@ -385,8 +384,7 @@ Before pushing, update these personal placeholders:
 
 Do not commit `.env`, Terraform state, AWS credentials, or real secrets.
 
-## Interview talking points
-
+## Architecture discussion
 Start with the problem, then move through guarantees:
 
 > Hospital robots produce continuous operational data, but operators need both durable history and a low-latency current view. I decoupled producers from consumers with Kafka, used PostgreSQL for auditable history, Redis for the latest point, and WebSockets for the operator experience. The ingestion path is at least once, so writes are idempotent. Alert publication uses an outbox to avoid a database/Kafka dual-write gap. I chose a modular monolith because one team can own it today while the ports provide extraction boundaries if scale or ownership changes.
@@ -404,8 +402,7 @@ Be prepared to explain:
 - what you would move to S3 at larger retention windows
 - when you would split ingestion, query, alerting, and WebSocket gateway services
 
-See [Interview guide](docs/interview-guide.md) for a complete walkthrough and follow-up questions.
-
+See [System design walkthrough](docs/system-design-walkthrough.md) for detailed architectural trade-offs and failure scenarios.
 ## Documentation
 
 - [Architecture and failure semantics](docs/architecture.md)
@@ -413,7 +410,7 @@ See [Interview guide](docs/interview-guide.md) for a complete walkthrough and fo
 - [Data model and retention](docs/data-model.md)
 - [Operations runbook](docs/runbook.md)
 - [Load-testing guide](docs/load-testing.md)
-- [Interview walkthrough](docs/interview-guide.md)
+- [System design walkthrough](docs/system-design-walkthrough.md)
 - [Architecture decision records](docs/adr/)
 
 ## Known production extensions
@@ -428,7 +425,7 @@ The repository is deliberately honest about what remains environment-specific:
 - multi-region disaster recovery and tested recovery-time objectives
 - real device identity, certificate rotation, command-and-control authorization, and OTA updates
 
-Those are roadmap items, not hidden claims. The included system is complete and runnable for its stated 1,000-robot portfolio workload.
+Those are roadmap items, not hidden claims. The included system is complete and runnable for its stated 1,000-robot workload.
 
 ## License
 
