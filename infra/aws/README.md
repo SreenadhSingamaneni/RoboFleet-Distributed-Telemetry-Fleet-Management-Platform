@@ -67,7 +67,7 @@ The reference cluster encrypts Kafka traffic with TLS but uses unauthenticated c
 ## High availability and cost decisions
 
 - Three private AZs support three MSK brokers and ECS distribution.
-- One NAT Gateway controls portfolio cost but is not AZ-independent. Production can use a NAT per AZ and VPC endpoints for ECR, S3, CloudWatch, Secrets Manager, and STS.
+- One NAT Gateway controls demonstration-environment cost but is not AZ-independent. Production can use a NAT per AZ and VPC endpoints for ECR, S3, CloudWatch, Secrets Manager, and STS.
 - RDS deletion has Terraform `prevent_destroy` plus AWS deletion protection. A deliberate destruction requires reviewed code changes and a final snapshot plan.
 - The simulator desired count defaults to zero. Run it only for demos or load tests.
 - Size instances from measured load; defaults are reference starting points.
@@ -96,4 +96,3 @@ Create alarms for:
 ## Destruction
 
 Data resources are protected. Never disable deletion protection merely to make a command pass. Confirm backups, retention approval, affected environment, state workspace, and recovery path before any destructive change.
-

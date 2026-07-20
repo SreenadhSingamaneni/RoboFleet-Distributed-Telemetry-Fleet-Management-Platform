@@ -1,8 +1,13 @@
 # Robotic Fleet Telemetry Platform
 
+[![CI](https://github.com/SreenadhSingamaneni/RoboFleet-Distributed-Telemetry-Fleet-Management-Platform/actions/workflows/ci.yml/badge.svg)](https://github.com/SreenadhSingamaneni/RoboFleet-Distributed-Telemetry-Fleet-Management-Platform/actions/workflows/ci.yml)
+[![Security](https://github.com/SreenadhSingamaneni/RoboFleet-Distributed-Telemetry-Fleet-Management-Platform/actions/workflows/security.yml/badge.svg)](https://github.com/SreenadhSingamaneni/RoboFleet-Distributed-Telemetry-Fleet-Management-Platform/actions/workflows/security.yml)
+[![Java 21](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.org/projects/jdk/21/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 A production-oriented, event-driven platform that simulates **1,000 autonomous hospital robots**, ingests their telemetry through Kafka, stores durable history in PostgreSQL, maintains live state in Redis, evaluates operational alerts, and streams updates to a React command center over WebSockets.
 
-This repository is designed as a portfolio system for backend, platform, and distributed-systems interviews. It favors explicit failure semantics, measurable behavior, clean architecture, and deployability over toy-code shortcuts.
+This repository demonstrates production-oriented backend and distributed-systems design with explicit failure semantics, measurable behavior, clean architecture, and deployability.
 
 ## What the system demonstrates
 
@@ -152,7 +157,7 @@ robotic-fleet-telemetry-platform/
 ├── dashboard/                   React + TypeScript operations UI
 ├── observability/               Prometheus rules and Grafana provisioning
 ├── infra/aws/terraform/         AWS reference deployment
-├── docs/                        Design, learning, operations, and interview guides
+├── docs/                        Design, implementation, and operations guides
 ├── .github/workflows/           CI, security, and deployment pipelines
 └── docker-compose.yml           Complete local runtime
 ```
@@ -362,30 +367,7 @@ Read [AWS deployment guide](infra/aws/README.md) before applying. The reference 
 
 The deployment workflow assumes the state backend, AWS OIDC role, base Terraform infrastructure, certificate, and bootstrap images have been prepared as described in the AWS guide.
 
-## Upload this project to GitHub
-
-After extracting the ZIP:
-
-```bash
-cd robotic-fleet-telemetry-platform
-git init
-git add .
-git commit -m "Build production robotic fleet telemetry platform"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/robotic-fleet-telemetry-platform.git
-git push -u origin main
-```
-
-Before pushing, update these personal placeholders:
-
-- `.github/CODEOWNERS`
-- repository URL and screenshots, if you add them
-- AWS domain/certificate variables
-- local passwords in your uncommitted `.env`
-
-Do not commit `.env`, Terraform state, AWS credentials, or real secrets.
-
-## Interview talking points
+## Architecture discussion
 
 Start with the problem, then move through guarantees:
 
@@ -404,7 +386,7 @@ Be prepared to explain:
 - what you would move to S3 at larger retention windows
 - when you would split ingestion, query, alerting, and WebSocket gateway services
 
-See [Interview guide](docs/interview-guide.md) for a complete walkthrough and follow-up questions.
+See [System design walkthrough](docs/system-design-walkthrough.md) for detailed architectural trade-offs, scaling considerations, and failure scenarios.
 
 ## Documentation
 
@@ -413,7 +395,7 @@ See [Interview guide](docs/interview-guide.md) for a complete walkthrough and fo
 - [Data model and retention](docs/data-model.md)
 - [Operations runbook](docs/runbook.md)
 - [Load-testing guide](docs/load-testing.md)
-- [Interview walkthrough](docs/interview-guide.md)
+- [System design walkthrough](docs/system-design-walkthrough.md)
 - [Architecture decision records](docs/adr/)
 
 ## Known production extensions
@@ -428,9 +410,8 @@ The repository is deliberately honest about what remains environment-specific:
 - multi-region disaster recovery and tested recovery-time objectives
 - real device identity, certificate rotation, command-and-control authorization, and OTA updates
 
-Those are roadmap items, not hidden claims. The included system is complete and runnable for its stated 1,000-robot portfolio workload.
+Those are roadmap items, not hidden claims. The included system is complete and runnable for its stated 1,000-robot workload.
 
 ## License
 
 MIT. See [LICENSE](LICENSE).
-
