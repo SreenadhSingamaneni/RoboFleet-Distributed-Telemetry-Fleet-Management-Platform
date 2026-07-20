@@ -1,0 +1,33 @@
+#!/bin/sh
+set -eu
+
+MVNW_DIR="${HOME:-/tmp}/.m2/wrapper/dists/apache-maven-3.9.11"
+MVN_BIN="$MVNW_DIR/apache-maven-3.9.11/bin/mvn"
+
+if command -v mvn >/dev/null 2>&1; then
+  exec mvn "$@"
+fi
+
+if [ ! -x "$MVN_BIN" ]; then
+  mkdir -p "$MVNW_DIR"
+  ARCHIVE="$MVNW_DIR/apache-maven.zip"
+  URL="https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.11/apache-maven-3.9.11-bin.zip"
+  if command -v curl >/dev/null 2>&1; then
+    curl -fsSL "$URL" -o "$ARCHIVE"
+  elif command -v wget >/dev/null 2>&1; then
+    wget -q "$URL" -O "$ARCHIVE"
+  else
+    echo "Install Maven 3.9+ or curl/wget." >&2
+    exit 1
+  fi
+  if command -v unzip >/dev/null 2>&1; then
+    unzip -q "$ARCHIVE" -d "$MVNW_DIR"
+  else
+    echo "unzip is required for the first wrapper run." >&2
+    exit 1
+  fi
+  rm -f "$ARCHIVE"
+fi
+
+exec "$MVN_BIN" "$@"
+

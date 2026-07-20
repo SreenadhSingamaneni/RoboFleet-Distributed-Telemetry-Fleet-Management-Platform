@@ -1,0 +1,2 @@
+"""Hospital robot telemetry simulator."""
+

@@ -1,0 +1,48 @@
+groups:
+  - name: robotic-fleet
+    rules:
+      - alert: FleetBackendUnavailable
+        expr: up{job="backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: Fleet backend is unavailable
+          description: Prometheus has not scraped the backend for one minute.
+
+      - alert: TelemetryStreamStopped
+        expr: rate(fleet_telemetry_accepted_total[2m]) < 1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: No telemetry is being accepted
+          description: The ingestion rate has remained below one event per second.
+
+      - alert: TelemetryRejectionSpike
+        expr: rate(fleet_telemetry_rejected_total[5m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Telemetry validation failures are elevated
+          description: More than five malformed events per second are being rejected.
+
+      - alert: KafkaConsumerLagHigh
+        expr: sum(kafka_consumergroup_lag{consumergroup="fleet-telemetry-ingestor"}) > 10000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Fleet ingestion consumer lag is high
+          description: The backend is more than 10,000 events behind Kafka.
+
+      - alert: SimulatorDeliveryFailures
+        expr: increase(simulator_delivery_failures_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: Robot simulator cannot deliver some events
+          description: At least one Kafka delivery failed in the last five minutes.
+

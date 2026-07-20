@@ -1,0 +1,112 @@
+spring:
+  application:
+    name: fleet-telemetry-backend
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/fleet}
+    username: ${DATABASE_USERNAME:fleet}
+    password: ${DATABASE_PASSWORD:fleet-local-password}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:20}
+      minimum-idle: 5
+      connection-timeout: 3000
+      validation-timeout: 1000
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+  flyway:
+    enabled: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2s
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+    consumer:
+      group-id: ${KAFKA_CONSUMER_GROUP:fleet-telemetry-ingestor}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      max-poll-records: ${KAFKA_MAX_POLL_RECORDS:500}
+      properties:
+        spring.json.trusted.packages: com.roboverse.fleet.infrastructure.messaging
+        spring.json.value.default.type: com.roboverse.fleet.infrastructure.messaging.TelemetryEvent
+        spring.json.use.type.headers: false
+        isolation.level: read_committed
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      properties:
+        spring.json.add.type.headers: false
+        enable.idempotence: true
+        compression.type: lz4
+        linger.ms: 10
+    listener:
+      type: batch
+      ack-mode: manual_immediate
+
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+  forward-headers-strategy: framework
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when_authorized
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  tracing:
+    sampling:
+      probability: ${TRACING_SAMPLING_PROBABILITY:0.1}
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
+  level:
+    com.roboverse.fleet: ${APP_LOG_LEVEL:INFO}
+
+fleet:
+  topics:
+    telemetry: ${TELEMETRY_TOPIC:fleet.telemetry.v1}
+    telemetry-invalid: ${TELEMETRY_INVALID_TOPIC:fleet.telemetry.invalid.v1}
+    alerts: ${ALERT_TOPIC:fleet.alerts.v1}
+  cache:
+    latest-telemetry-ttl: ${LATEST_TELEMETRY_TTL:5m}
+  security:
+    api-key-enabled: ${API_KEY_ENABLED:true}
+    api-key: ${API_KEY:local-demo-key-change-me}
+    allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+  websocket:
+    consumer-group: ${HOSTNAME:fleet-local}-websocket
+    relay-enabled: ${WEBSOCKET_RELAY_ENABLED:false}
+    relay-host: ${WEBSOCKET_RELAY_HOST:localhost}
+    relay-port: ${WEBSOCKET_RELAY_PORT:61613}
+    relay-login: ${WEBSOCKET_RELAY_LOGIN:guest}
+    relay-passcode: ${WEBSOCKET_RELAY_PASSCODE:guest}
+  alerting:
+    low-battery-warning-percent: ${LOW_BATTERY_WARNING_PERCENT:20}
+    low-battery-critical-percent: ${LOW_BATTERY_CRITICAL_PERCENT:10}
+    high-temperature-celsius: ${HIGH_TEMPERATURE_CELSIUS:70}
+    stalled-speed-mps: ${STALLED_SPEED_MPS:0.05}
+    stale-after: ${ROBOT_STALE_AFTER:30s}
+  ingestion:
+    max-clock-skew: ${MAX_TELEMETRY_CLOCK_SKEW:5m}

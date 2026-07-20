@@ -1,0 +1,74 @@
+name: Deploy AWS
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Terraform workspace/environment
+        required: true
+        default: dev
+        type: choice
+        options: [dev, staging, production]
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy-${{ inputs.environment }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.12.2
+      - name: Select Terraform workspace
+        working-directory: infra/aws/terraform
+        run: |
+          terraform init
+          terraform workspace select "${{ inputs.environment }}" || terraform workspace new "${{ inputs.environment }}"
+          terraform validate
+      - name: Authenticate to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Resolve deployment values
+        id: values
+        working-directory: infra/aws/terraform
+        run: |
+          echo "backend_repo=$(terraform output -raw backend_ecr_repository_url)" >> "$GITHUB_OUTPUT"
+          echo "dashboard_repo=$(terraform output -raw dashboard_ecr_repository_url)" >> "$GITHUB_OUTPUT"
+          echo "simulator_repo=$(terraform output -raw simulator_ecr_repository_url)" >> "$GITHUB_OUTPUT"
+          secret_arn=$(terraform output -raw api_key_secret_arn)
+          api_key=$(aws secretsmanager get-secret-value --secret-id "$secret_arn" --query SecretString --output text)
+          echo "api_key=$api_key" >> "$GITHUB_OUTPUT"
+      - name: Build and push images
+        env:
+          TAG: ${{ github.sha }}
+          BACKEND_REPO: ${{ steps.values.outputs.backend_repo }}
+          DASHBOARD_REPO: ${{ steps.values.outputs.dashboard_repo }}
+          SIMULATOR_REPO: ${{ steps.values.outputs.simulator_repo }}
+          API_KEY: ${{ steps.values.outputs.api_key }}
+        run: |
+          docker build -t "$BACKEND_REPO:$TAG" backend
+          docker build --build-arg VITE_API_KEY="$API_KEY" -t "$DASHBOARD_REPO:$TAG" dashboard
+          docker build -t "$SIMULATOR_REPO:$TAG" simulator
+          docker push "$BACKEND_REPO:$TAG"
+          docker push "$DASHBOARD_REPO:$TAG"
+          docker push "$SIMULATOR_REPO:$TAG"
+      - name: Apply image revision
+        working-directory: infra/aws/terraform
+        run: |
+          terraform apply -auto-approve \
+            -var="environment=${{ inputs.environment }}" \
+            -var="backend_image_tag=${{ github.sha }}" \
+            -var="dashboard_image_tag=${{ github.sha }}" \
+            -var="simulator_image_tag=${{ github.sha }}"
+

@@ -1,0 +1,12 @@
+aws_region          = "us-east-1"
+environment         = "dev"
+acm_certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/replace-me"
+public_base_url     = "https://fleet.example.com"
+deletion_protection = true
+
+# First bootstrap only: point at an image tag that already exists in ECR,
+# then let the deployment workflow set immutable commit-SHA tags.
+backend_image_tag   = "bootstrap"
+dashboard_image_tag = "bootstrap"
+simulator_image_tag = "bootstrap"
+

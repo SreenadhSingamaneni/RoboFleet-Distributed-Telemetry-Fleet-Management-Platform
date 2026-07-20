@@ -1,0 +1,77 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Accepted telemetry / sec",
+      "id": 1,
+      "gridPos": { "h": 7, "w": 6, "x": 0, "y": 0 },
+      "targets": [{ "expr": "sum(rate(fleet_telemetry_accepted_total[1m]))", "legendFormat": "events/s", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "ops", "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "red" }, { "color": "green", "value": 500 }] } }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" }
+    },
+    {
+      "type": "stat",
+      "title": "Kafka consumer lag",
+      "id": 2,
+      "gridPos": { "h": 7, "w": 6, "x": 6, "y": 0 },
+      "targets": [{ "expr": "sum(kafka_consumergroup_lag{consumergroup=\"fleet-telemetry-ingestor\"})", "refId": "A" }],
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "yellow", "value": 5000 }, { "color": "red", "value": 10000 }] } }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area" }
+    },
+    {
+      "type": "stat",
+      "title": "Rejected telemetry / sec",
+      "id": 3,
+      "gridPos": { "h": 7, "w": 6, "x": 12, "y": 0 },
+      "targets": [{ "expr": "sum(rate(fleet_telemetry_rejected_total[5m]))", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "ops", "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "color": "red", "value": 1 }] } }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area" }
+    },
+    {
+      "type": "stat",
+      "title": "PostgreSQL connections",
+      "id": 4,
+      "gridPos": { "h": 7, "w": 6, "x": 18, "y": 0 },
+      "targets": [{ "expr": "sum(pg_stat_activity_count{datname=\"fleet\"})", "refId": "A" }],
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" } }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area" }
+    },
+    {
+      "type": "timeseries",
+      "title": "Ingestion throughput",
+      "id": 5,
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 7 },
+      "targets": [
+        { "expr": "sum(rate(fleet_telemetry_accepted_total[1m]))", "legendFormat": "accepted", "refId": "A" },
+        { "expr": "sum(rate(fleet_telemetry_duplicates_total[1m]))", "legendFormat": "duplicates", "refId": "B" },
+        { "expr": "sum(rate(fleet_telemetry_rejected_total[1m]))", "legendFormat": "rejected", "refId": "C" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops", "custom": { "lineWidth": 2, "fillOpacity": 15 } }, "overrides": [] }
+    },
+    {
+      "type": "timeseries",
+      "title": "Ingestion latency",
+      "id": 6,
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 7 },
+      "targets": [
+        { "expr": "histogram_quantile(0.50, sum(rate(fleet_telemetry_ingestion_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p50", "refId": "A" },
+        { "expr": "histogram_quantile(0.95, sum(rate(fleet_telemetry_ingestion_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p95", "refId": "B" },
+        { "expr": "histogram_quantile(0.99, sum(rate(fleet_telemetry_ingestion_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p99", "refId": "C" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s", "custom": { "lineWidth": 2, "fillOpacity": 10 } }, "overrides": [] }
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 41,
+  "tags": ["robots", "kafka", "spring-boot"],
+  "templating": { "list": [] },
+  "time": { "from": "now-30m", "to": "now" },
+  "timezone": "browser",
+  "title": "Robotic Fleet Platform",
+  "uid": "robotic-fleet-platform",
+  "version": 1
+}
+

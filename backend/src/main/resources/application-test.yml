@@ -1,0 +1,8 @@
+fleet:
+  security:
+    api-key-enabled: false
+spring:
+  kafka:
+    listener:
+      auto-startup: false
+
