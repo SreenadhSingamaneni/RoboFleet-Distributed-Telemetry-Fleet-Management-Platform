@@ -367,26 +367,32 @@ Read [AWS deployment guide](infra/aws/README.md) before applying. The reference 
 
 The deployment workflow assumes the state backend, AWS OIDC role, base Terraform infrastructure, certificate, and bootstrap images have been prepared as described in the AWS guide.
 
-## Architecture discussion
+## Architecture rationale
 
-Start with the problem, then move through guarantees:
+Hospital robots continuously generate operational telemetry. The platform must preserve durable history while providing operators with a low-latency view of current fleet state.
 
-> Hospital robots produce continuous operational data, but operators need both durable history and a low-latency current view. I decoupled producers from consumers with Kafka, used PostgreSQL for auditable history, Redis for the latest point, and WebSockets for the operator experience. The ingestion path is at least once, so writes are idempotent. Alert publication uses an outbox to avoid a database/Kafka dual-write gap. I chose a modular monolith because one team can own it today while the ports provide extraction boundaries if scale or ownership changes.
+Kafka decouples telemetry producers from backend availability and preserves ordering within each robot partition. PostgreSQL stores auditable history, Redis maintains disposable current state, and WebSockets deliver live updates to connected operators.
 
-Be prepared to explain:
+The ingestion path uses at-least-once delivery with idempotent database writes. Alert publication uses a transactional outbox to close the consistency gap between PostgreSQL transactions and Kafka publication.
 
-- why the Kafka key is robot ID
-- why more consumers than partitions do not improve throughput
-- why JPA is appropriate for alerts but not the telemetry hot path
-- what happens between database commit and Kafka acknowledgment
-- how the outbox closes the alert dual-write gap
-- why WebSocket fan-out needs a distinct group per replica
-- how Redis failure differs from PostgreSQL failure
-- how PostgreSQL partition pruning and retention work
-- what you would move to S3 at larger retention windows
-- when you would split ingestion, query, alerting, and WebSocket gateway services
+The backend is implemented as a modular monolith because the current modules share one ownership and deployment boundary. Domain, application, and infrastructure ports provide extraction points if ingestion, queries, alert processing, or WebSocket delivery later require independent scaling or deployment.
 
-See [System design walkthrough](docs/system-design-walkthrough.md) for detailed architectural trade-offs, scaling considerations, and failure scenarios.
+Key design considerations include:
+
+- Robot ID is the Kafka key, preserving per-robot ordering.
+- Kafka partition count limits useful consumer parallelism.
+- JPA manages control-plane aggregates such as robots and alerts.
+- JDBC batching handles the append-heavy telemetry path.
+- Duplicate delivery is safe because durable writes are idempotent.
+- The transactional outbox prevents committed alerts from being lost before Kafka publication.
+- Each backend replica uses a distinct fan-out group for its local WebSocket clients.
+- Redis failure degrades current-state reads without stopping durable ingestion.
+- PostgreSQL partitions support pruning, bounded retention, and archival.
+- Long-term raw telemetry can move to S3 and Parquet as storage volume grows.
+- Modules can be extracted into separate services when scaling or ownership boundaries justify the added operational complexity.
+
+See [System design walkthrough](docs/system-design-walkthrough.md) for detailed trade-offs, scaling considerations, and failure scenarios.
+
 
 ## Documentation
 
