@@ -4,7 +4,7 @@ This guide is the learning companion to the code. Read it in order, open each re
 
 ## Milestone 1: repository and runtime boundaries
 
-The root is a monorepo because one portfolio owner needs atomic changes to the event contract, producer, consumer, and UI. Separate `backend`, `simulator`, and `dashboard` build contexts preserve independent deployability.
+The root is a monorepo because one engineering team needs atomic changes to the event contract, producer, consumer, and UI. Separate `backend`, `simulator`, and `dashboard` build contexts preserve independent deployability.
 
 - `.editorconfig` makes whitespace deterministic across editors.
 - `.gitignore` excludes secrets, local state, dependencies, and build output.
@@ -229,4 +229,4 @@ For each milestone:
 5. explain the guarantee without using framework jargon;
 6. write down one tradeoff and one next-scale change.
 
-If you can explain the failure paths—not just the annotations—you can defend the design in a CTO-level interview.
+Understanding the failure paths—not just the annotations—is essential for evaluating and communicating the design during an architecture review.

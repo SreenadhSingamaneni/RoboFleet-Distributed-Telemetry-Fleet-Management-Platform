@@ -1,8 +1,14 @@
 # Robotic Fleet Telemetry Platform
 
+[![CI](https://github.com/SreenadhSingamaneni/RoboFleet-Distributed-Telemetry-Fleet-Management-Platform/actions/workflows/ci.yml/badge.svg)](https://github.com/SreenadhSingamaneni/RoboFleet-Distributed-Telemetry-Fleet-Management-Platform/actions/workflows/ci.yml)
+[![Security](https://github.com/SreenadhSingamaneni/RoboFleet-Distributed-Telemetry-Fleet-Management-Platform/actions/workflows/security.yml/badge.svg)](https://github.com/SreenadhSingamaneni/RoboFleet-Distributed-Telemetry-Fleet-Management-Platform/actions/workflows/security.yml)
+[![Java 21](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.org/projects/jdk/21/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 A production-oriented, event-driven platform that simulates **1,000 autonomous hospital robots**, ingests their telemetry through Kafka, stores durable history in PostgreSQL, maintains live state in Redis, evaluates operational alerts, and streams updates to a React command center over WebSockets.
 
 This repository demonstrates production-oriented backend and distributed-systems design with explicit failure semantics, measurable behavior, clean architecture, and deployability.
+
 ## What the system demonstrates
 
 - Java 21 and Spring Boot 3 backend with clean architecture boundaries
@@ -361,30 +367,8 @@ Read [AWS deployment guide](infra/aws/README.md) before applying. The reference 
 
 The deployment workflow assumes the state backend, AWS OIDC role, base Terraform infrastructure, certificate, and bootstrap images have been prepared as described in the AWS guide.
 
-## Upload this project to GitHub
-
-After extracting the ZIP:
-
-```bash
-cd robotic-fleet-telemetry-platform
-git init
-git add .
-git commit -m "Build production robotic fleet telemetry platform"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/robotic-fleet-telemetry-platform.git
-git push -u origin main
-```
-
-Before pushing, update these personal placeholders:
-
-- `.github/CODEOWNERS`
-- repository URL and screenshots, if you add them
-- AWS domain/certificate variables
-- local passwords in your uncommitted `.env`
-
-Do not commit `.env`, Terraform state, AWS credentials, or real secrets.
-
 ## Architecture discussion
+
 Start with the problem, then move through guarantees:
 
 > Hospital robots produce continuous operational data, but operators need both durable history and a low-latency current view. I decoupled producers from consumers with Kafka, used PostgreSQL for auditable history, Redis for the latest point, and WebSockets for the operator experience. The ingestion path is at least once, so writes are idempotent. Alert publication uses an outbox to avoid a database/Kafka dual-write gap. I chose a modular monolith because one team can own it today while the ports provide extraction boundaries if scale or ownership changes.
@@ -402,7 +386,8 @@ Be prepared to explain:
 - what you would move to S3 at larger retention windows
 - when you would split ingestion, query, alerting, and WebSocket gateway services
 
-See [System design walkthrough](docs/system-design-walkthrough.md) for detailed architectural trade-offs and failure scenarios.
+See [System design walkthrough](docs/system-design-walkthrough.md) for detailed architectural trade-offs, scaling considerations, and failure scenarios.
+
 ## Documentation
 
 - [Architecture and failure semantics](docs/architecture.md)
@@ -430,4 +415,3 @@ Those are roadmap items, not hidden claims. The included system is complete and 
 ## License
 
 MIT. See [LICENSE](LICENSE).
-

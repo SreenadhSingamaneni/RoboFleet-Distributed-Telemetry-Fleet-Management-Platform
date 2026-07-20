@@ -21,7 +21,7 @@ export default function App() {
   const robots = useQuery({ queryKey: ['robots'], queryFn: fleetApi.robots, refetchInterval: 10_000 })
   const alerts = useQuery({ queryKey: ['alerts'], queryFn: fleetApi.alerts, refetchInterval: 8_000 })
   const acknowledge = useMutation({
-    mutationFn: (id: string) => fleetApi.acknowledgeAlert(id, 'portfolio-operator'),
+    mutationFn: (id: string) => fleetApi.acknowledgeAlert(id, 'fleet-operator'),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['alerts'] })
       void queryClient.invalidateQueries({ queryKey: ['summary'] })

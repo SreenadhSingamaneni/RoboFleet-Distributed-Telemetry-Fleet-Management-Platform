@@ -8,7 +8,7 @@ Measure sustainable throughput, end-to-end freshness, database growth, consumer 
 
 | Scenario | Robots | Rate per robot | Total rate | Duration |
 | --- | ---: | ---: | ---: | ---: |
-| Portfolio demo | 1,000 | 1 Hz | 1,000 events/s | 15 min |
+| Baseline workload | 1,000 | 1 Hz | 1,000 events/s | 15 min |
 | Peak traffic | 1,000 | 5 Hz | 5,000 events/s | 30 min |
 | Scale exploration | 10,000 | 1 Hz | 10,000 events/s | 30 min |
 | Soak | 1,000 | 1 Hz | 1,000 events/s | 8 hr |
@@ -45,4 +45,3 @@ The local database seeds 1,000 robots. For more robots, add a test-only seed mig
 ## Report template
 
 Record commit SHA, environment, instance sizes, Kafka partitions, database settings, producer configuration, start/end time, total events, p50/p95/p99 ingestion latency, maximum lag, recovery duration, error count, and cost estimate. Preserve Grafana screenshots and relevant query plans with the report.
-

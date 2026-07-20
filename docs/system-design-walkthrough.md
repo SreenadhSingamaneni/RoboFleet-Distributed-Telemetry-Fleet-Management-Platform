@@ -1,22 +1,22 @@
-# Interview walkthrough
+# System design walkthrough
 
-## Two-minute project explanation
+## System overview
 
-> I built an event-driven telemetry platform for 1,000 autonomous hospital robots. A stateful Python simulator publishes versioned telemetry to Kafka using robot ID as the key, which preserves per-robot ordering and decouples bursty producers from processing. A Java 21 Spring Boot backend validates and consumes records in batches, stores durable time-partitioned history in PostgreSQL, maintains latest state in Redis, and evaluates extensible alert rules. The delivery model is at least once, so PostgreSQL writes are idempotent. Alert events use a transactional outbox to avoid losing messages between a database commit and Kafka publish. Every backend replica also has a unique Kafka fan-out group so WebSocket clients receive a complete live stream after horizontal scaling. The project includes a React command center, Prometheus and Grafana, CI/security workflows, Docker Compose, and an AWS ECS/MSK/RDS/ElastiCache Terraform architecture.
+The platform processes telemetry from 1,000 autonomous hospital robots. A stateful Python simulator publishes versioned telemetry to Kafka using robot ID as the key, preserving per-robot ordering and decoupling bursty producers from downstream processing. A Java 21 Spring Boot backend validates and consumes records in batches, stores durable time-partitioned history in PostgreSQL, maintains latest state in Redis, and evaluates extensible alert rules. The delivery model is at least once, so PostgreSQL writes are idempotent. Alert events use a transactional outbox to avoid losing messages between a database commit and Kafka publication. Every backend replica also has a unique Kafka fan-out group so WebSocket clients receive a complete live stream after horizontal scaling. The system includes a React command center, Prometheus and Grafana, CI and security workflows, Docker Compose, and an AWS ECS, MSK, RDS, and ElastiCache Terraform architecture.
 
-## Five-minute architecture walkthrough
+## Architecture flow
 
-1. Start with the operational problem: durable audit history plus a live operator view.
-2. Explain why Kafka sits between robots and backend workers.
-3. Explain robot-key partitioning and the boundary of ordering.
-4. Contrast JPA control-plane persistence with JDBC telemetry batching.
-5. State the at-least-once guarantee and idempotent insert mechanism.
-6. Explain Redis as disposable current state.
-7. Walk through alert aggregate transitions and the outbox.
-8. Explain why WebSocket fan-out uses a group per replica.
-9. Finish with metrics, failure tests, and AWS mapping.
+1. Operational requirements call for durable audit history and a low-latency operator view.
+2. Kafka decouples robot producers from backend workers and absorbs traffic bursts.
+3. Robot-key partitioning preserves per-robot ordering while supporting parallel processing.
+4. JPA manages control-plane aggregates while JDBC batching handles the telemetry hot path.
+5. At-least-once delivery is made safe through idempotent inserts.
+6. Redis provides disposable current-state caching.
+7. Alert aggregate transitions and outbox records commit atomically.
+8. Per-replica Kafka groups provide complete WebSocket fan-out.
+9. Metrics, failure tests, and AWS services complete the operational model.
 
-## Likely questions and strong answers
+## Design decisions
 
 ### Why Kafka instead of sending telemetry directly to REST?
 
@@ -52,7 +52,7 @@ A shared ingestion group distributes partitions, so a replica sees only part of 
 
 ### Why a modular monolith?
 
-The current scope has one owner and one cohesive deployment. Separate services would add network failure, version coordination, deployment, and observability costs before independent scaling is proven. Ports and modules establish extraction seams if metrics later show ingestion, query, alerting, or WebSockets need separate ownership or capacity.
+The current scope is owned by one engineering team and uses one cohesive deployment. Separate services would add network failure, version coordination, deployment, and observability costs before independent scaling is proven. Ports and modules establish extraction seams if metrics later show ingestion, query, alerting, or WebSockets need separate ownership or capacity.
 
 ### How would you support 100,000 robots?
 
@@ -60,13 +60,13 @@ Increase Kafka partitions based on throughput and ordering needs, separate inges
 
 ### How would real robots authenticate?
 
-Use per-device identities and short-lived or rotated certificates, mutual TLS at an IoT gateway or managed IoT service, authorization scoped to the robot's own topic, revocation, secure provisioning, and audit logs. The portfolio simulator intentionally does not pretend a local Kafka connection is a device-security design.
+Use per-device identities and short-lived or rotated certificates, mutual TLS at an IoT gateway or managed IoT service, authorization scoped to the robot's own topic, revocation, secure provisioning, and audit logs. The local simulator deliberately excludes production device identity; real deployments require a dedicated device-security architecture.
 
 ### What healthcare-specific concern matters?
 
 Keep operational telemetry separate from protected health information. Use opaque mission IDs, least privilege, encryption, auditability, and explicit retention. Device logs should never contain patient names or clinical payloads.
 
-## Tradeoffs to volunteer
+## Known trade-offs
 
 - JSON is easy to inspect but lacks registry-enforced compatibility and is larger than Avro/Protobuf.
 - PostgreSQL is excellent for recent operational history but not economical for indefinite raw retention at tens of millions of rows per day.
@@ -74,21 +74,12 @@ Keep operational telemetry separate from protected health information. Use opaqu
 - API-key authentication is a local demonstration mechanism, not production user identity.
 - One NAT Gateway reduces the reference environment's cost but is an AZ dependency; production can use one per AZ plus VPC endpoints.
 
-## Whiteboard prompts to practice
+## Architecture review scenarios
 
-1. Draw the crash window between database commit and offset commit.
-2. Draw shared ingestion groups versus unique fan-out groups.
-3. Calculate events/day from robots and rate.
-4. Show how 12 partitions limit useful consumers.
+1. Analyze the crash window between database commit and offset commit.
+2. Compare shared ingestion groups with unique fan-out groups.
+3. Calculate daily event volume from robot count and telemetry rate.
+4. Evaluate how 12 partitions limit useful consumers.
 5. Design 30-day retention and S3 archival.
-6. Add robot commands without allowing replay or unauthorized control.
+6. Add robot commands with replay protection and authorization.
 7. Define SLOs for ingestion availability, freshness, and alert latency.
-
-## Resume bullets
-
-- Built a Java 21/Spring Boot robotic-fleet telemetry platform ingesting a configurable 1,000+ Kafka events per second with idempotent JDBC batching, PostgreSQL partitioning, Redis latest-state caching, and real-time WebSocket fan-out.
-- Designed a rule-based alert lifecycle and transactional outbox, eliminating the PostgreSQL/Kafka dual-write loss window while supporting horizontally scaled consumers and operator acknowledgment workflows.
-- Delivered a reproducible Docker environment, React/TypeScript operations dashboard, Prometheus/Grafana observability, GitHub Actions CI/security scanning, and AWS ECS/MSK/RDS/ElastiCache Terraform architecture.
-
-Use measured results from your own load-test run before adding latency, throughput, or uptime numbers to a resume.
-
