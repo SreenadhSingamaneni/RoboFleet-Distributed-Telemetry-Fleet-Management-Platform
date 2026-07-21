@@ -87,7 +87,7 @@ class RobotState:
             "floor": self.floor,
             "batteryPercent": round(self.battery_percent, 2),
             "speedMps": round(self.speed_mps, 3),
-            "headingDegrees": round(self.heading_degrees, 2),
+            "headingDegrees": round(self.heading_degrees, 2) % 360.0,
             "temperatureCelsius": round(self.temperature_celsius, 2),
             "missionState": self.mission_state,
             "connectivity": self.connectivity,
