@@ -18,6 +18,16 @@ def test_event_matches_backend_contract() -> None:
     assert 0 <= event["headingDegrees"] < 360
 
 
+def test_event_normalizes_heading_that_rounds_to_360() -> None:
+    rng = random.Random(42)
+    robot = RobotState.create(1, rng, 200, 120)
+    robot.heading_degrees = 359.999
+
+    event = robot.as_event(datetime(2026, 1, 1, tzinfo=UTC))
+
+    assert event["headingDegrees"] == 0.0
+
+
 def test_robot_remains_inside_hospital_map() -> None:
     rng = random.Random(7)
     robot = RobotState.create(17, rng, 10, 8)
